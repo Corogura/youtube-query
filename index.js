@@ -57,6 +57,7 @@ async function fetchChannelId(handle) {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+    const channelThumbnails = await fetchChannelThumbnails();
     for (const channelId of savedChannels) {
         const latestVideo = await fetchLatestVideo(channelId);
         if (latestVideo) {
@@ -64,6 +65,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             videoDiv.className = 'video-item';
             videoDiv.innerHTML = `
                 <div class="channel-title">
+                    <img src="${channelThumbnails.get(channelId) || ''}" alt="Channel Thumbnail" class="channel-thumbnail">
                     <h2>${latestVideo.snippet.channelTitle} </h2>
                     <button class="remove-channel-button" data-channel-id="${channelId}">チャンネル削除</button>
                 </div>
@@ -102,4 +104,17 @@ async function fetchLatestVideo(channelId) {
         }
     }
     return null;
+}
+
+async function fetchChannelThumbnails() {
+    const channelThumbnails = new Map();
+    const channelCount = savedChannels.length;
+    if (channelCount === 0) return channelThumbnails;
+    const channelsString = savedChannels.join(',');
+    const response = await fetch(`https://www.googleapis.com/youtube/v3/channels?part=snippet&maxResult=${channelCount}&id=${channelsString}&key=${apiKey}`);
+    const data = await response.json();
+    for (const item of data.items) {
+        channelThumbnails.set(item.id, item.snippet.thumbnails.medium.url);
+    }
+    return channelThumbnails;
 }

@@ -39,8 +39,15 @@ button:hover {
 
 .channel-title {
     width: 20%;
+    align-items: center;
 }
 
 .video-section {
     width: 80%;
+}
+
+.channel-thumbnail {
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
 }
