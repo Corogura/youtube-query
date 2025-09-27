@@ -22,6 +22,15 @@ button:hover {
     background-color: #c5e1ec;
 }
 
+#videos-list {
+    display: flex;
+    flex-direction: column;
+    width: auto;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
 .video-item {
     display: flex;
     flex-direction: row;
@@ -31,6 +40,7 @@ button:hover {
     border-color: white;
     border-radius: 10px;
     padding: 10px;
+    width: 100%;
 }
 
 .video-item > div {
@@ -50,4 +60,18 @@ button:hover {
     width: 180px;
     height: 180px;
     border-radius: 50%;
+}
+
+.loader {
+  border: 16px solid #f3f3f3;
+  border-radius: 50%;
+  border-top: 16px solid #3498db;
+  width: 30px;
+  height: 30px;
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }

@@ -57,6 +57,13 @@ async function fetchChannelId(handle) {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+    const loader = document.querySelector('.loader');
+    loader.style.display = 'block';
+    if (savedChannels.length === 0) {
+        document.getElementById('videos-list').innerHTML = '<p>チャンネルが追加されていません。上のフォームからチャンネルを追加してください。</p>';
+        loader.style.display = 'none';
+        return;
+    }
     const channelThumbnails = await fetchChannelThumbnails();
     const videos = [];
     for (const channelId of savedChannels) {
@@ -96,6 +103,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
     });
+    loader.style.display = 'none';
 });
 
 async function fetchLatestVideo(channelId) {
