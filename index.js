@@ -56,23 +56,15 @@ async function fetchChannelId(handle) {
     }
 }
 
-let loadedChannels = 0;
-const channelsPerLoad = 5;
-
-document.addEventListener('DOMContentLoaded', loadChannels);
-document.addEventListener('scrollend', loadChannels);
-
-async function loadChannels() {
+document.addEventListener('DOMContentLoaded', async () => {
     const channelThumbnails = await fetchChannelThumbnails();
     const videos = [];
-    const channelsToLoad = savedChannels.slice(loadedChannels, loadedChannels + channelsPerLoad);
-    for (const channelId of channelsToLoad) {
+    for (const channelId of savedChannels) {
         const latestVideo = await fetchLatestVideo(channelId);
         if (latestVideo) {
             videos.push(latestVideo);
         }
     }
-    loadedChannels += channelsToLoad.length;
     videos.sort((a, b) => new Date(b.snippet.publishedAt) - new Date(a.snippet.publishedAt));
     for (const video of videos) {
         const videoDiv = document.createElement('div');
@@ -104,7 +96,7 @@ async function loadChannels() {
             }
         });
     });
-}
+});
 
 async function fetchLatestVideo(channelId) {
     const response = await fetch(`https://www.googleapis.com/youtube/v3/activities?part=snippet,contentDetails&channelId=${channelId}&maxResults=3&order=date&type=video&key=${apiKey}`);
