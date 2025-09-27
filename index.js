@@ -84,7 +84,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             </div>
             <div class="video-section">
                 <h3>${video.snippet.title}</h3>
-                <a href="https://www.youtube.com/watch?v=${video.videoId}" target="_blank"><img src="${video.snippet.thumbnails.high.url}" alt="Video Thumbnail"></a>
+                <a href="https://www.youtube.com/watch?v=${video.videoId}" target="_blank"><img src="${video.snippet.thumbnails.high.url}" alt="Video Thumbnail" class="video-thumbnail"></a>
                 <p>投稿日時: ${new Date(video.snippet.publishedAt).toLocaleString()}</p>
             </div>
         `;
