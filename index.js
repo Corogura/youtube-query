@@ -58,25 +58,30 @@ async function fetchChannelId(handle) {
 
 document.addEventListener('DOMContentLoaded', async () => {
     const channelThumbnails = await fetchChannelThumbnails();
+    const videos = [];
     for (const channelId of savedChannels) {
         const latestVideo = await fetchLatestVideo(channelId);
         if (latestVideo) {
-            const videoDiv = document.createElement('div');
-            videoDiv.className = 'video-item';
-            videoDiv.innerHTML = `
-                <div class="channel-title">
-                    <img src="${channelThumbnails.get(channelId) || ''}" alt="Channel Thumbnail" class="channel-thumbnail">
-                    <h2>${latestVideo.snippet.channelTitle} </h2>
-                    <button class="remove-channel-button" data-channel-id="${channelId}">チャンネル削除</button>
-                </div>
-                <div class="video-section">
-                    <h3>${latestVideo.snippet.title}</h3>
-                    <a href="https://www.youtube.com/watch?v=${latestVideo.videoId}" target="_blank"><img src="${latestVideo.snippet.thumbnails.high.url}" alt="Video Thumbnail"></a>
-                    <p>投稿日時: ${new Date(latestVideo.snippet.publishedAt).toLocaleString()}</p>
-                </div>
-            `;
-            document.getElementById('videos-list').appendChild(videoDiv);
+            videos.push(latestVideo);
         }
+    }
+    videos.sort((a, b) => new Date(b.snippet.publishedAt) - new Date(a.snippet.publishedAt));
+    for (const video of videos) {
+        const videoDiv = document.createElement('div');
+        videoDiv.className = 'video-item';
+        videoDiv.innerHTML = `
+            <div class="channel-title">
+                <img src="${channelThumbnails.get(video.snippet.channelId) || ''}" alt="Channel Thumbnail" class="channel-thumbnail">
+                <h2>${video.snippet.channelTitle} </h2>
+                <button class="remove-channel-button" data-channel-id="${video.snippet.channelId}">チャンネル削除</button>
+            </div>
+            <div class="video-section">
+                <h3>${video.snippet.title}</h3>
+                <a href="https://www.youtube.com/watch?v=${video.videoId}" target="_blank"><img src="${video.snippet.thumbnails.high.url}" alt="Video Thumbnail"></a>
+                <p>投稿日時: ${new Date(video.snippet.publishedAt).toLocaleString()}</p>
+            </div>
+        `;
+        document.getElementById('videos-list').appendChild(videoDiv);
     }
     const removeChannelButtons = document.getElementsByClassName('remove-channel-button');
     Array.from(removeChannelButtons).forEach(button => {
