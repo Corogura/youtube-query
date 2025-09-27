@@ -1,0 +1,46 @@
+body {
+    background-color: #1a2942;
+    color: white;
+    padding: 20px;
+}
+
+div {
+    margin: 10px;
+}
+
+button {
+    background-color: #8cbbce;
+    color: black;
+    padding: 5px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin: 5px;
+}
+
+button:hover {
+    background-color: #c5e1ec;
+}
+
+.video-item {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    border-style: solid;
+    border-width: 1px;
+    border-color: white;
+    border-radius: 10px;
+    padding: 10px;
+}
+
+.video-item > div {
+    padding: 10px;
+}
+
+.channel-title {
+    width: 20%;
+}
+
+.video-section {
+    width: 80%;
+}

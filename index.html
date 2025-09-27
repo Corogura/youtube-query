@@ -3,14 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <link rel="stylesheet" href="style.css">
-    <link rel="script" href="index.js">
+    <script src="index.js" defer></script>
 </head>
 <body>
     <h1>YouTube Query</h1>
-    <form id="api-form">
+    <div id="api-input-div">
         <label for="api-key">API Key:</label>
-        <input type="text" id="api-key" name="api-key" required>
-        <button type="submit" onclick="saveAPIKey(document.getElementById('api-key').value)">Submit</button>
-    </form>
-    <div id="result"></div>
+        <input type="text" id="api-key">
+        <button type="button" id="api-button">提出</button>
+    </div>
+    <div id="main-content" style="display:none;">
+        <div id="buttons">
+            <button type="button" id="change-api-key-button">API Key変更</button>
+        </div>
+        <div id="query-section">
+            <label for="channel-handle">チャンネルハンドル:</label>
+            <input type="text" id="channel-handle">
+            <button type="button" id="add-channel-button">チャンネル追加</button>
+            <br>
+            <label for="channel-id">チャンネルID:</label>
+            <input type="text" id="channel-id">
+            <button type="button" id="add-channel-id-button">IDでチャンネル追加</button>
+        </div>
+        <div id="videos-list">
+        </div>
+    </div>
 </body>
