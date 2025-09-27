@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="style.css">
+    <link rel="script" href="index.js">
+</head>
+<body>
+    <h1>YouTube Query</h1>
+    <form id="api-form">
+        <label for="api-key">API Key:</label>
+        <input type="text" id="api-key" name="api-key" required>
+        <button type="submit" onclick="saveAPIKey(document.getElementById('api-key').value)">Submit</button>
+    </form>
+    <div id="result"></div>
+</body>
