@@ -69,7 +69,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 </div>
                 <div class="video-section">
                     <h3>${latestVideo.snippet.title}</h3>
-                    <a href="https://www.youtube.com/watch?v=${latestVideo.id.videoId}" target="_blank"><img src="${latestVideo.snippet.thumbnails.medium.url}" alt="Video Thumbnail"></a>
+                    <a href="https://www.youtube.com/watch?v=${latestVideo.videoId}" target="_blank"><img src="${latestVideo.snippet.thumbnails.medium.url}" alt="Video Thumbnail"></a>
                     <p>投稿日時: ${new Date(latestVideo.snippet.publishedAt).toLocaleString()}</p>
                 </div>
             `;
@@ -92,11 +92,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 async function fetchLatestVideo(channelId) {
-    const response = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&maxResults=1&order=date&type=video&key=${apiKey}`);
+    const response = await fetch(`https://www.googleapis.com/youtube/v3/activities?part=snippet,contentDetails&channelId=${channelId}&maxResults=3&order=date&type=video&key=${apiKey}`);
     const data = await response.json();
-    if (data.items && data.items.length > 0) {
-        return data.items[0];
-    } else {
-        return null;
+    const items = data.items;
+    for (const item of items) {
+        if (item.snippet.type === 'upload') {
+            item.videoId = item.contentDetails.upload.videoId;
+            return item;
+        }
     }
+    return null;
 }
