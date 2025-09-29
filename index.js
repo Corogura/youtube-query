@@ -110,24 +110,42 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function fetchVideoStatus() {
     const videoDivs = document.getElementsByClassName('video-section');
     const joinedIds = Array.from(videoDivs).map(div => div.getAttribute('videoid')).join(',');
-    const response = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${joinedIds}&key=${apiKey}`);
+    const response = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=snippet,liveStreamingDetails&id=${joinedIds}&key=${apiKey}`);
     const data = await response.json();
     for (const item of data.items) {
         const videoId = item.id;
         const statusP = document.getElementById(`status-${videoId}`);
         switch (item.snippet.liveBroadcastContent) {
             case 'upcoming':
-                statusP.innerHTML = statusP.innerHTML + ' | ステータス: <span class="video-status">ライブ配信予定</span>';
+                statusP.innerHTML = statusP.innerHTML + ` | <span class="video-status">${calculateTimeDifference(item.liveStreamingDetails.scheduledStartTime)}ライブ配信予定</span>`;
                 break;
             case 'live':
-                statusP.innerHTML = statusP.innerHTML + ' | ステータス: <span class="video-status">ライブ配信中</span>';
+                statusP.innerHTML = statusP.innerHTML + ' | <span class="video-status">ライブ配信中</span>';
                 break;
             case 'none':
-                statusP.innerHTML = statusP.innerHTML + ' | ステータス: <span class="video-status">公開中</span>';
+                statusP.innerHTML = statusP.innerHTML + ' | <span class="video-status">公開中</span>';
                 break;
             default:
-                statusP.innerHTML = statusP.innerHTML + ' | ステータス: <span class="video-status">不明</span>';
+                statusP.innerHTML = statusP.innerHTML + ' | <span class="video-status">不明</span>';
         }
+    }
+}
+
+function calculateTimeDifference(futureDate) {
+    const now = new Date();
+    const future = new Date(futureDate);
+    const diffInSeconds = Math.floor((future - now) / 1000);
+    if (diffInSeconds < 60) {
+        return `${diffInSeconds} 秒後`;
+    } else if (diffInSeconds < 3600) {
+        const minutes = Math.floor(diffInSeconds / 60);
+        return `${minutes} 分後`;
+    } else if (diffInSeconds < 86400) {
+        const hours = Math.floor(diffInSeconds / 3600);
+        return `${hours} 時間後`;
+    } else {
+        const days = Math.floor(diffInSeconds / 86400);
+        return `${days} 日後`;
     }
 }
 
