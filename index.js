@@ -82,10 +82,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <h2>${video.snippet.channelTitle} </h2>
                 <button class="remove-channel-button" data-channel-id="${video.snippet.channelId}">チャンネル削除</button>
             </div>
-            <div class="video-section">
+            <div class="video-section" videoid="${video.videoId}">
                 <h3>${video.snippet.title}</h3>
                 <a href="https://www.youtube.com/watch?v=${video.videoId}" target="_blank"><img src="${video.snippet.thumbnails.high.url}" alt="Video Thumbnail" class="video-thumbnail"></a>
-                <p>投稿日時: ${new Date(video.snippet.publishedAt).toLocaleString()}</p>
+                <p id="status-${video.videoId}">投稿日時: ${new Date(video.snippet.publishedAt).toLocaleString()}</p>
             </div>
         `;
         document.getElementById('videos-list').appendChild(videoDiv);
@@ -104,7 +104,34 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     });
     loader.style.display = 'none';
+    await fetchVideoStatus();
 });
+
+async function fetchVideoStatus() {
+    const videoDivs = document.getElementsByClassName('video-section');
+    for (const videoDiv of videoDivs) {
+        const videoId = videoDiv.getAttribute('videoid');
+        const response = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${videoId}&key=${apiKey}`);
+        const data = await response.json();
+        const statusP = document.getElementById(`status-${videoId}`);
+        if (data.items && data.items.length > 0) {
+            const video = data.items[0];
+            switch (video.snippet.liveBroadcastContent) {
+                case 'upcoming':
+                    statusP.innerHTML = statusP.innerHTML + ' | ステータス: <span class="video-status">ライブ配信予定</span>';
+                    break;
+                case 'live':
+                    statusP.innerHTML = statusP.innerHTML + ' | ステータス: <span class="video-status">ライブ配信中</span>';
+                    break;
+                case 'none':
+                    statusP.innerHTML = statusP.innerHTML + ' | ステータス: <span class="video-status">公開中</span>';
+                    break;
+                default:
+                    statusP.innerHTML = statusP.innerHTML + ' | ステータス: <span class="video-status">不明</span>';
+            }
+        }
+    }
+}
 
 async function fetchLatestVideo(channelId) {
     const response = await fetch(`https://www.googleapis.com/youtube/v3/activities?part=snippet,contentDetails&channelId=${channelId}&maxResults=3&order=date&type=video&key=${apiKey}`);
