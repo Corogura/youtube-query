@@ -109,26 +109,24 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function fetchVideoStatus() {
     const videoDivs = document.getElementsByClassName('video-section');
-    for (const videoDiv of videoDivs) {
-        const videoId = videoDiv.getAttribute('videoid');
-        const response = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${videoId}&key=${apiKey}`);
-        const data = await response.json();
+    const joinedIds = Array.from(videoDivs).map(div => div.getAttribute('videoid')).join(',');
+    const response = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${joinedIds}&key=${apiKey}`);
+    const data = await response.json();
+    for (const item of data.items) {
+        const videoId = item.id;
         const statusP = document.getElementById(`status-${videoId}`);
-        if (data.items && data.items.length > 0) {
-            const video = data.items[0];
-            switch (video.snippet.liveBroadcastContent) {
-                case 'upcoming':
-                    statusP.innerHTML = statusP.innerHTML + ' | ステータス: <span class="video-status">ライブ配信予定</span>';
-                    break;
-                case 'live':
-                    statusP.innerHTML = statusP.innerHTML + ' | ステータス: <span class="video-status">ライブ配信中</span>';
-                    break;
-                case 'none':
-                    statusP.innerHTML = statusP.innerHTML + ' | ステータス: <span class="video-status">公開中</span>';
-                    break;
-                default:
-                    statusP.innerHTML = statusP.innerHTML + ' | ステータス: <span class="video-status">不明</span>';
-            }
+        switch (item.snippet.liveBroadcastContent) {
+            case 'upcoming':
+                statusP.innerHTML = statusP.innerHTML + ' | ステータス: <span class="video-status">ライブ配信予定</span>';
+                break;
+            case 'live':
+                statusP.innerHTML = statusP.innerHTML + ' | ステータス: <span class="video-status">ライブ配信中</span>';
+                break;
+            case 'none':
+                statusP.innerHTML = statusP.innerHTML + ' | ステータス: <span class="video-status">公開中</span>';
+                break;
+            default:
+                statusP.innerHTML = statusP.innerHTML + ' | ステータス: <span class="video-status">不明</span>';
         }
     }
 }
