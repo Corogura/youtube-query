@@ -47,13 +47,26 @@ button:hover {
     padding: 10px;
 }
 
-.channel-title {
-    width: 20%;
+.channel-title-section {
+    width: 25%;
     align-items: center;
+    display: flex;
+    flex-direction: column;
+}
+
+.channel-title h2 {
+    display: inline;
+    vertical-align: middle;
+    margin-right: 2px;
+}
+
+.youtube-icon {
+    width: 42px;
+    vertical-align: middle;
 }
 
 .video-section {
-    width: 80%;
+    width: 75%;
 }
 
 .channel-thumbnail {

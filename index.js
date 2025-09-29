@@ -77,9 +77,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         const videoDiv = document.createElement('div');
         videoDiv.className = 'video-item';
         videoDiv.innerHTML = `
-            <div class="channel-title">
+            <div class="channel-title-section">
                 <img src="${channelThumbnails.get(video.snippet.channelId) || ''}" alt="Channel Thumbnail" class="channel-thumbnail">
-                <h2>${video.snippet.channelTitle} </h2>
+                <div class="channel-title"><h2>${video.snippet.channelTitle}</h2><a href="https://www.youtube.com/channel/${video.snippet.channelId}"><img src="yt_icon_red_digital.png" alt="YouTube Icon" class="youtube-icon"></a></div>
                 <button class="remove-channel-button" data-channel-id="${video.snippet.channelId}">チャンネル削除</button>
             </div>
             <div class="video-section" videoid="${video.videoId}">
