@@ -139,7 +139,7 @@ async function loadCategoryVideos() {
         loader.style.display = 'none';
         return;
     }
-    const channelThumbnails = await fetchChannelThumbnails();
+    const channels = await fetchChannel();
     const videos = [];
     for (const channelId of savedCategories[currentCategoryIndex].channels) {
         const latestVideo = await fetchLatestVideo(channelId);
@@ -149,39 +149,25 @@ async function loadCategoryVideos() {
     }
     videos.sort((a, b) => new Date(b.snippet.publishedAt) - new Date(a.snippet.publishedAt));
     for (const video of videos) {
+        const videoDivLast = document.createElement('div');
         if (videos.indexOf(video) === videos.length - 1) {
-            const videoDivLast = document.createElement('div');
             videoDivLast.className = 'video-item-last';
-            videoDivLast.innerHTML = `
-                <div class="channel-title-section">
-                    <img src="${channelThumbnails.get(video.snippet.channelId) || ''}" alt="Channel Thumbnail" class="channel-thumbnail">
-                    <div class="channel-title"><h2>${video.snippet.channelTitle}</h2><a href="https://www.youtube.com/channel/${video.snippet.channelId}"><img src="yt_icon_red_digital.png" alt="YouTube Icon" class="youtube-icon"></a></div>
-                    <button class="remove-channel-button" data-channel-id="${video.snippet.channelId}">チャンネル削除</button>
-                </div>
-                <div class="video-section" videoid="${video.videoId}">
-                    <h3>${video.snippet.title}</h3>
-                    <a href="https://www.youtube.com/watch?v=${video.videoId}" target="_blank"><img src="${video.snippet.thumbnails.high.url}" alt="Video Thumbnail" class="video-thumbnail"></a>
-                    <p id="status-${video.videoId}">投稿日時: ${new Date(video.snippet.publishedAt).toLocaleString()}</p>
-                </div>
-            `;
-            document.getElementById('videos-list').appendChild(videoDivLast);
         } else {
-            const videoDiv = document.createElement('div');
-            videoDiv.className = 'video-item';
-            videoDiv.innerHTML = `
-                <div class="channel-title-section">
-                    <img src="${channelThumbnails.get(video.snippet.channelId) || ''}" alt="Channel Thumbnail" class="channel-thumbnail">
-                    <div class="channel-title"><h2>${video.snippet.channelTitle}</h2><a href="https://www.youtube.com/channel/${video.snippet.channelId}"><img src="yt_icon_red_digital.png" alt="YouTube Icon" class="youtube-icon"></a></div>
-                    <button class="remove-channel-button" data-channel-id="${video.snippet.channelId}">チャンネル削除</button>
-                </div>
-                <div class="video-section" videoid="${video.videoId}">
-                    <h3>${video.snippet.title}</h3>
-                    <a href="https://www.youtube.com/watch?v=${video.videoId}" target="_blank"><img src="${video.snippet.thumbnails.high.url}" alt="Video Thumbnail" class="video-thumbnail"></a>
-                    <p id="status-${video.videoId}">投稿日時: ${new Date(video.snippet.publishedAt).toLocaleString()}</p>
-                </div>
-            `;
-            document.getElementById('videos-list').appendChild(videoDiv);
+            videoDivLast.className = 'video-item';
         }
+        videoDivLast.innerHTML = `
+            <div class="channel-title-section">
+                <img src="${channels.get(video.snippet.channelId + '_thumbnail') || ''}" alt="Channel Thumbnail" class="channel-thumbnail">
+                <div class="channel-title"><h2>${channels.get(video.snippet.channelId + '_title' || '')}</h2><a href="https://www.youtube.com/channel/${video.snippet.channelId}"><img src="yt_icon_red_digital.png" alt="YouTube Icon" class="youtube-icon"></a></div>
+                <button class="remove-channel-button" data-channel-id="${video.snippet.channelId}">チャンネル削除</button>
+            </div>
+            <div class="video-section" videoid="${video.videoId}">
+                <h3>${video.snippet.title}</h3>
+                <a href="https://www.youtube.com/watch?v=${video.videoId}" target="_blank"><img src="${video.snippet.thumbnails.high.url}" alt="Video Thumbnail" class="video-thumbnail"></a>
+                <p id="status-${video.videoId}">投稿日時: ${new Date(video.snippet.publishedAt).toLocaleString()}</p>
+            </div>
+        `;
+        document.getElementById('videos-list').appendChild(videoDivLast);
     }
     const removeChannelButtons = document.getElementsByClassName('remove-channel-button');
     Array.from(removeChannelButtons).forEach(button => {
@@ -203,7 +189,7 @@ async function loadCategoryVideos() {
 async function fetchVideoStatus() {
     const videoDivs = document.getElementsByClassName('video-section');
     const joinedIds = Array.from(videoDivs).map(div => div.getAttribute('videoid')).join(',');
-    const response = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=snippet,liveStreamingDetails&id=${joinedIds}&key=${apiKey}`);
+    const response = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=snippet,liveStreamingDetails&id=${joinedIds}&hl=ja&key=${apiKey}`);
     const data = await response.json();
     for (const item of data.items) {
         const videoId = item.id;
@@ -220,6 +206,10 @@ async function fetchVideoStatus() {
                 break;
             default:
                 statusP.innerHTML = statusP.innerHTML + ' | <span class="video-status">不明</span>';
+        }
+        if (item.snippet.defaultLanguage && item.snippet.defaultLanguage !== 'ja') {
+            const videoTitle = document.querySelector(`div[videoid="${videoId}"] h3`);
+            videoTitle.innerHTML = item.snippet.localized.title;
         }
     }
 }
@@ -243,7 +233,7 @@ function calculateTimeDifference(futureDate) {
 }
 
 async function fetchLatestVideo(channelId) {
-    const response = await fetch(`https://www.googleapis.com/youtube/v3/activities?part=snippet,contentDetails&channelId=${channelId}&maxResults=3&order=date&type=video&key=${apiKey}`);
+    const response = await fetch(`https://www.googleapis.com/youtube/v3/activities?part=snippet,contentDetails&channelId=${channelId}&hl=ja&maxResults=3&order=date&type=video&key=${apiKey}`);
     const data = await response.json();
     const items = data.items;
     for (const item of items) {
@@ -255,15 +245,16 @@ async function fetchLatestVideo(channelId) {
     return null;
 }
 
-async function fetchChannelThumbnails() {
-    const channelThumbnails = new Map();
+async function fetchChannel() {
+    const channel = new Map();
     const channelCount = savedCategories[currentCategoryIndex].channels.length;
-    if (channelCount === 0) return channelThumbnails;
+    if (channelCount === 0) return channel;
     const channelsString = savedCategories[currentCategoryIndex].channels.join(',');
-    const response = await fetch(`https://www.googleapis.com/youtube/v3/channels?part=snippet&maxResult=${channelCount}&id=${channelsString}&key=${apiKey}`);
+    const response = await fetch(`https://www.googleapis.com/youtube/v3/channels?part=snippet&maxResult=${channelCount}&hl=ja&id=${channelsString}&key=${apiKey}`);
     const data = await response.json();
     for (const item of data.items) {
-        channelThumbnails.set(item.id, item.snippet.thumbnails.medium.url);
+        channel.set(item.id + '_thumbnail', item.snippet.thumbnails.medium.url);
+        channel.set(item.id + '_title', item.snippet.localized.title);
     }
-    return channelThumbnails;
+    return channel;
 }
