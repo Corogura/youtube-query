@@ -28,7 +28,7 @@ button:hover {
     width: auto;
     align-items: center;
     gap: 10px;
-    margin-top: 10px;
+    margin-top: 0;
 }
 
 .video-item {

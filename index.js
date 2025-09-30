@@ -5,6 +5,7 @@ if (apiKey) {
 }
 
 const savedChannels = JSON.parse(localStorage.getItem("youtube_channels") || "[]");
+const savedCategories = JSON.parse(localStorage.getItem("youtube_categories") || "{}");
 
 const apiButton = document.getElementById('api-button');
 apiButton.addEventListener('click', () => {
@@ -28,7 +29,7 @@ const addChannelButton = document.getElementById('add-channel-button');
 addChannelButton.addEventListener('click', async () => {
     const channelHandle = document.getElementById('channel-handle').value;
     if (!channelHandle) {
-        alert('チャンネルハンドルを入力してください。');
+        alert('チャンネルハンドル/IDを入力してください。');
         return;
     }
     try {
@@ -43,11 +44,20 @@ addChannelButton.addEventListener('click', async () => {
         window.location.reload();
     } catch (error) {
         alert(error.message);
+        return;
     }
 });
 
 async function fetchChannelId(handle) {
-    const response = await fetch(`https://www.googleapis.com/youtube/v3/channels?part=id&forHandle=${handle}&key=${apiKey}`);
+    let url;
+    if (handle[0] === '@') {
+        url = `https://www.googleapis.com/youtube/v3/channels?part=id&forHandle=${handle}&key=${apiKey}`;
+    } else if (handle[0] === 'U' && handle.length === 24) {
+        url = `https://www.googleapis.com/youtube/v3/channels?part=id&id=${handle}&key=${apiKey}`;
+    } else {
+        throw new Error('無効なチャンネルハンドル/IDです。');
+    }
+    const response = await fetch(url);
     const data = await response.json();
     if (data.items && data.items.length > 0) {
         return data.items[0].id;
