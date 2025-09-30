@@ -1,11 +1,7 @@
 body {
     background-color: #1a2942;
     color: white;
-    padding: 20px;
-}
-
-div {
-    margin: 10px;
+    padding: 50px;
 }
 
 button {
@@ -22,29 +18,91 @@ button:hover {
     background-color: #c5e1ec;
 }
 
+#query-section {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+#display-section {
+    position: relative;
+    margin-top: 20px;
+    width: 100%;
+}
+
+#channel-categories {
+    display: flex;
+    flex-direction: row;
+    overflow-y: auto;
+    position: absolute;
+    z-index: 1;
+    padding-left: 20px;
+}
+
+#channel-categories > div {
+    margin-right: 10px;
+    padding: 6px 10px 10px 10px;
+}
+
+.category-item {
+    border-style: solid;
+    border-width: 1px;
+    border-color: white;
+    border-radius: 10px;
+}
+
+.category-item:hover {
+    background-color: #3c485a;
+}
+
+.category-item-selected {
+    border-style: solid;
+    border-width: 1px;
+    border-color: white;
+    border-radius: 10px;
+    background-color: #3c485a;
+}
+
 #videos-list {
     display: flex;
     flex-direction: column;
-    width: auto;
+    width: 100%;
+    min-height: 400px;
     align-items: center;
     gap: 10px;
     margin-top: 0;
+    position: absolute;
+    z-index: 2;
+    top: 35px;
+    background-color: #1a2942;
+    border-style: solid;
+    border-width: 1px;
+    border-color: white;
+    border-radius: 10px;
+    padding: 20px;
 }
 
 .video-item {
     display: flex;
     flex-direction: row;
     align-items: center;
-    border-style: solid;
-    border-width: 1px;
-    border-color: white;
-    border-radius: 10px;
     padding: 10px;
     width: 100%;
+    border-bottom-style: solid;
+    border-bottom-width: 1px;
+    border-bottom-color: white;
 }
 
 .video-item > div {
     padding: 10px;
+}
+
+.video-item-last {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 10px;
+    width: 100%;
 }
 
 .channel-title-section {
@@ -85,6 +143,12 @@ button:hover {
 .video-status {
     margin-left: 5px;
     font-weight: bold;
+}
+
+#loader-section {
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .loader {

@@ -4,8 +4,40 @@ if (apiKey) {
     document.getElementById('main-content').style.display = 'block';
 }
 
-const savedChannels = JSON.parse(localStorage.getItem("youtube_channels") || "[]");
-const savedCategories = JSON.parse(localStorage.getItem("youtube_categories") || "{}");
+const savedCategories = JSON.parse(localStorage.getItem("youtube_categories") || "null");
+let currentCategoryIndex = null;
+if (!savedCategories) {
+    localStorage.setItem("youtube_categories", JSON.stringify([{"name": "メイン", "channels": []}]));
+}
+for (const category of savedCategories) {
+    const categoryDiv = document.createElement('div');
+    categoryDiv.className = 'category-item';
+    categoryDiv.id = `category-${category.name}`;
+    categoryDiv.innerHTML = `<span class="category-name">${category.name}</span>`;
+    categoryDiv.addEventListener('click', async () => {
+        currentCategoryIndex = savedCategories.indexOf(category);
+        currentDiv = document.getElementById(`category-${category.name}`);
+        currentDiv.classList.remove('category-item');
+        currentDiv.classList.add('category-item-selected');
+        Array.from(document.getElementsByClassName('category-item-selected')).forEach(div => {
+            if (div !== currentDiv) {
+                div.classList.remove('category-item-selected');
+                div.classList.add('category-item');
+            }
+        });
+        document.getElementById('videos-list').innerHTML = '<div class="loader" style="display:none;"></div>';
+        const loader = document.querySelector('.loader');
+        loader.style.display = 'block';
+        await loadCategoryVideos();
+    });
+    document.getElementById('channel-categories').appendChild(categoryDiv);
+}
+currentCategoryIndex = 0;
+{
+    const currentDiv = document.getElementById(`category-${savedCategories[0].name}`);
+    currentDiv.click();
+}
+
 
 const apiButton = document.getElementById('api-button');
 apiButton.addEventListener('click', () => {
@@ -34,18 +66,51 @@ addChannelButton.addEventListener('click', async () => {
     }
     try {
         const channelID = await fetchChannelId(channelHandle);
-        if (savedChannels.includes(channelID)) {
+        if (savedCategories[currentCategoryIndex].channels.includes(channelID)) {
             alert('チャンネルは既に追加されています。');
             return;
         }
-        savedChannels.push(channelID);
-        localStorage.setItem("youtube_channels", JSON.stringify(savedChannels));
+        savedCategories[currentCategoryIndex].channels.push(channelID);
+        localStorage.setItem("youtube_categories", JSON.stringify(savedCategories));
         alert('チャンネルが追加されました。');
         window.location.reload();
     } catch (error) {
         alert(error.message);
         return;
     }
+});
+
+const addCategoryButton = document.getElementById('add-category-button');
+addCategoryButton.addEventListener('click', () => {
+    const categoryName = document.getElementById('category-name').value;
+    if (!categoryName) {
+        alert('カテゴリ名を入力してください。');
+        return;
+    }
+    if (savedCategories.find(cat => cat.name === categoryName)) {
+        alert('同じ名前のカテゴリが既に存在します。');
+        return;
+    }
+    savedCategories.push({name: categoryName, channels: []});
+    localStorage.setItem("youtube_categories", JSON.stringify(savedCategories));
+    alert('カテゴリが追加されました。');
+    window.location.reload();
+});
+
+const removeCategoryButton = document.getElementById('remove-category-button');
+removeCategoryButton.addEventListener('click', () => {
+    if (savedCategories.length === 1) {
+        alert('最低1つのカテゴリが必要です。');
+        return;
+    }
+    const categoryName = savedCategories[currentCategoryIndex].name;
+    if (!confirm(`カテゴリ "${categoryName}" を削除しますか？この操作は元に戻せません。`)) {
+        return;
+    }
+    savedCategories.splice(currentCategoryIndex, 1);
+    localStorage.setItem("youtube_categories", JSON.stringify(savedCategories));
+    alert('カテゴリが削除されました。');
+    window.location.reload();
 });
 
 async function fetchChannelId(handle) {
@@ -66,17 +131,17 @@ async function fetchChannelId(handle) {
     }
 }
 
-document.addEventListener('DOMContentLoaded', async () => {
+async function loadCategoryVideos() {
     const loader = document.querySelector('.loader');
     loader.style.display = 'block';
-    if (savedChannels.length === 0) {
+    if (savedCategories[currentCategoryIndex].channels.length === 0) {
         document.getElementById('videos-list').innerHTML = '<p>チャンネルが追加されていません。上のフォームからチャンネルを追加してください。</p>';
         loader.style.display = 'none';
         return;
     }
     const channelThumbnails = await fetchChannelThumbnails();
     const videos = [];
-    for (const channelId of savedChannels) {
+    for (const channelId of savedCategories[currentCategoryIndex].channels) {
         const latestVideo = await fetchLatestVideo(channelId);
         if (latestVideo) {
             videos.push(latestVideo);
@@ -84,30 +149,48 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     videos.sort((a, b) => new Date(b.snippet.publishedAt) - new Date(a.snippet.publishedAt));
     for (const video of videos) {
-        const videoDiv = document.createElement('div');
-        videoDiv.className = 'video-item';
-        videoDiv.innerHTML = `
-            <div class="channel-title-section">
-                <img src="${channelThumbnails.get(video.snippet.channelId) || ''}" alt="Channel Thumbnail" class="channel-thumbnail">
-                <div class="channel-title"><h2>${video.snippet.channelTitle}</h2><a href="https://www.youtube.com/channel/${video.snippet.channelId}"><img src="yt_icon_red_digital.png" alt="YouTube Icon" class="youtube-icon"></a></div>
-                <button class="remove-channel-button" data-channel-id="${video.snippet.channelId}">チャンネル削除</button>
-            </div>
-            <div class="video-section" videoid="${video.videoId}">
-                <h3>${video.snippet.title}</h3>
-                <a href="https://www.youtube.com/watch?v=${video.videoId}" target="_blank"><img src="${video.snippet.thumbnails.high.url}" alt="Video Thumbnail" class="video-thumbnail"></a>
-                <p id="status-${video.videoId}">投稿日時: ${new Date(video.snippet.publishedAt).toLocaleString()}</p>
-            </div>
-        `;
-        document.getElementById('videos-list').appendChild(videoDiv);
+        if (videos.indexOf(video) === videos.length - 1) {
+            const videoDivLast = document.createElement('div');
+            videoDivLast.className = 'video-item-last';
+            videoDivLast.innerHTML = `
+                <div class="channel-title-section">
+                    <img src="${channelThumbnails.get(video.snippet.channelId) || ''}" alt="Channel Thumbnail" class="channel-thumbnail">
+                    <div class="channel-title"><h2>${video.snippet.channelTitle}</h2><a href="https://www.youtube.com/channel/${video.snippet.channelId}"><img src="yt_icon_red_digital.png" alt="YouTube Icon" class="youtube-icon"></a></div>
+                    <button class="remove-channel-button" data-channel-id="${video.snippet.channelId}">チャンネル削除</button>
+                </div>
+                <div class="video-section" videoid="${video.videoId}">
+                    <h3>${video.snippet.title}</h3>
+                    <a href="https://www.youtube.com/watch?v=${video.videoId}" target="_blank"><img src="${video.snippet.thumbnails.high.url}" alt="Video Thumbnail" class="video-thumbnail"></a>
+                    <p id="status-${video.videoId}">投稿日時: ${new Date(video.snippet.publishedAt).toLocaleString()}</p>
+                </div>
+            `;
+            document.getElementById('videos-list').appendChild(videoDivLast);
+        } else {
+            const videoDiv = document.createElement('div');
+            videoDiv.className = 'video-item';
+            videoDiv.innerHTML = `
+                <div class="channel-title-section">
+                    <img src="${channelThumbnails.get(video.snippet.channelId) || ''}" alt="Channel Thumbnail" class="channel-thumbnail">
+                    <div class="channel-title"><h2>${video.snippet.channelTitle}</h2><a href="https://www.youtube.com/channel/${video.snippet.channelId}"><img src="yt_icon_red_digital.png" alt="YouTube Icon" class="youtube-icon"></a></div>
+                    <button class="remove-channel-button" data-channel-id="${video.snippet.channelId}">チャンネル削除</button>
+                </div>
+                <div class="video-section" videoid="${video.videoId}">
+                    <h3>${video.snippet.title}</h3>
+                    <a href="https://www.youtube.com/watch?v=${video.videoId}" target="_blank"><img src="${video.snippet.thumbnails.high.url}" alt="Video Thumbnail" class="video-thumbnail"></a>
+                    <p id="status-${video.videoId}">投稿日時: ${new Date(video.snippet.publishedAt).toLocaleString()}</p>
+                </div>
+            `;
+            document.getElementById('videos-list').appendChild(videoDiv);
+        }
     }
     const removeChannelButtons = document.getElementsByClassName('remove-channel-button');
     Array.from(removeChannelButtons).forEach(button => {
         button.addEventListener('click', (e) => {
             const channelId = e.target.getAttribute('data-channel-id');
-            const index = savedChannels.indexOf(channelId);
+            const index = savedCategories[currentCategoryIndex].channels.indexOf(channelId);
             if (index > -1) {
-                savedChannels.splice(index, 1);
-                localStorage.setItem("youtube_channels", JSON.stringify(savedChannels));
+                savedCategories[currentCategoryIndex].channels.splice(index, 1);
+                localStorage.setItem("youtube_categories", JSON.stringify(savedCategories));
                 alert('チャンネルが削除されました。');
                 window.location.reload();
             }
@@ -115,7 +198,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
     loader.style.display = 'none';
     await fetchVideoStatus();
-});
+}
 
 async function fetchVideoStatus() {
     const videoDivs = document.getElementsByClassName('video-section');
@@ -174,9 +257,9 @@ async function fetchLatestVideo(channelId) {
 
 async function fetchChannelThumbnails() {
     const channelThumbnails = new Map();
-    const channelCount = savedChannels.length;
+    const channelCount = savedCategories[currentCategoryIndex].channels.length;
     if (channelCount === 0) return channelThumbnails;
-    const channelsString = savedChannels.join(',');
+    const channelsString = savedCategories[currentCategoryIndex].channels.join(',');
     const response = await fetch(`https://www.googleapis.com/youtube/v3/channels?part=snippet&maxResult=${channelCount}&id=${channelsString}&key=${apiKey}`);
     const data = await response.json();
     for (const item of data.items) {

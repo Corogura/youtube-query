@@ -19,14 +19,24 @@
             <button type="button" id="change-api-key-button">API Key変更</button>
         </div>
         <div id="query-section">
-            <label for="channel-handle">ハンドル/ID:</label>
-            <input type="text" id="channel-handle">
-            <button type="button" id="add-channel-button">チャンネル追加</button>
+            <div id="add-channel-section">
+                <label for="channel-handle">ハンドル/ID:</label>
+                <input type="text" id="channel-handle">
+                <button type="button" id="add-channel-button">チャンネル追加</button>
+            </div>
+            <div id="add-category-section">
+                <label for="category-name">カテゴリ名:</label>
+                <input type="text" id="category-name">
+                <button type="button" id="add-category-button">カテゴリ追加</button>
+                <button type="button" id="remove-category-button">現在のカテゴリを削除</button>
+            </div>
         </div>
-        <div id="channel-categories">
-        </div>
-        <div id="videos-list">
-            <div class="loader" style="display:none;"></div>
+        <div id="display-section">
+            <div id="channel-categories">
+            </div>
+            <div id="videos-list">
+                <div class="loader" style="display:none;"></div>
+            </div>
         </div>
     </div>
 </body>
