@@ -153,8 +153,12 @@ async function loadCategoryVideos() {
             videos.push(latestVideo);
             videos.sort((a, b) => new Date(b.snippet.publishedAt) - new Date(a.snippet.publishedAt));
 
-            videosListDiv.innerHTML = '';
-            videosListDiv.appendChild(loader);
+            Array.from(videosListDiv.children).forEach(child => {
+                if (!child.classList.contains('loader')) {
+                    child.remove();
+                }
+            });
+
             videos.forEach((video, index) => {
                 const videoDiv = document.createElement('div');
                 if (index === videos.length - 1) {
