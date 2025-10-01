@@ -112,6 +112,10 @@ button:hover {
     flex-direction: column;
 }
 
+.channel-title {
+    margin: 12px;
+}
+
 .channel-title h2 {
     display: inline;
     vertical-align: middle;
