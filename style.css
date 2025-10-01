@@ -24,6 +24,10 @@ button:hover {
     align-items: center;
 }
 
+#add-category-section {
+    margin-left: 10px;
+}
+
 #display-section {
     position: relative;
     margin-top: 20px;
