@@ -134,41 +134,57 @@ async function fetchChannelId(handle) {
 async function loadCategoryVideos() {
     const loader = document.querySelector('.loader');
     loader.style.display = 'block';
+
     if (savedCategories[currentCategoryIndex].channels.length === 0) {
         document.getElementById('videos-list').innerHTML = '<p>チャンネルが追加されていません。上のフォームからチャンネルを追加してください。</p>';
         loader.style.display = 'none';
         return;
     }
+
+    const videosListDiv = document.getElementById('videos-list');
+    videosListDiv.innerHTML = '';
+    videosListDiv.appendChild(loader);
     const channels = await fetchChannel();
     const videos = [];
+
     for (const channelId of savedCategories[currentCategoryIndex].channels) {
         const latestVideo = await fetchLatestVideo(channelId);
         if (latestVideo) {
             videos.push(latestVideo);
+            videos.sort((a, b) => new Date(b.snippet.publishedAt) - new Date(a.snippet.publishedAt));
+
+            videosListDiv.innerHTML = '';
+            videosListDiv.appendChild(loader);
+            videos.forEach((video, index) => {
+                const videoDiv = document.createElement('div');
+                if (index === videos.length - 1) {
+                    videoDiv.className = 'video-item-last';
+                } else {
+                    videoDiv.className = 'video-item';
+                }
+                videoDiv.innerHTML = `
+                    <div class="channel-title-section">
+                        <img src="${channels.get(video.snippet.channelId + '_thumbnail') || ''}" alt="Channel Thumbnail" class="channel-thumbnail">
+                        <div class="channel-title"><h2>${channels.get(video.snippet.channelId + '_title' || '')}</h2><a href="https://www.youtube.com/channel/${video.snippet.channelId}" target="_blank"><img src="yt_icon_red_digital.png" alt="YouTube Icon" class="youtube-icon"></a></div>
+                        <button class="remove-channel-button" data-channel-id="${video.snippet.channelId}">チャンネル削除</button>
+                    </div>
+                    <div class="video-section" videoid="${video.videoId}">
+                        <h3>${video.snippet.title}</h3>
+                        <a href="https://www.youtube.com/watch?v=${video.videoId}" target="_blank"><img src="${video.snippet.thumbnails.high.url}" alt="Video Thumbnail" class="video-thumbnail"></a>
+                        <p id="status-${video.videoId}">投稿日時: ${new Date(video.snippet.publishedAt).toLocaleString()}</p>
+                    </div>
+                `;
+                videosListDiv.appendChild(videoDiv);
+            });
         }
     }
-    videos.sort((a, b) => new Date(b.snippet.publishedAt) - new Date(a.snippet.publishedAt));
-    for (const video of videos) {
-        const videoDivLast = document.createElement('div');
-        if (videos.indexOf(video) === videos.length - 1) {
-            videoDivLast.className = 'video-item-last';
-        } else {
-            videoDivLast.className = 'video-item';
-        }
-        videoDivLast.innerHTML = `
-            <div class="channel-title-section">
-                <img src="${channels.get(video.snippet.channelId + '_thumbnail') || ''}" alt="Channel Thumbnail" class="channel-thumbnail">
-                <div class="channel-title"><h2>${channels.get(video.snippet.channelId + '_title' || '')}</h2><a href="https://www.youtube.com/channel/${video.snippet.channelId}"><img src="yt_icon_red_digital.png" alt="YouTube Icon" class="youtube-icon"></a></div>
-                <button class="remove-channel-button" data-channel-id="${video.snippet.channelId}">チャンネル削除</button>
-            </div>
-            <div class="video-section" videoid="${video.videoId}">
-                <h3>${video.snippet.title}</h3>
-                <a href="https://www.youtube.com/watch?v=${video.videoId}" target="_blank"><img src="${video.snippet.thumbnails.high.url}" alt="Video Thumbnail" class="video-thumbnail"></a>
-                <p id="status-${video.videoId}">投稿日時: ${new Date(video.snippet.publishedAt).toLocaleString()}</p>
-            </div>
-        `;
-        document.getElementById('videos-list').appendChild(videoDivLast);
-    }
+
+    await fetchVideoStatus();
+    addRemoveChannelButtonListeners();
+    loader.style.display = 'none';
+}
+
+function addRemoveChannelButtonListeners() {
     const removeChannelButtons = document.getElementsByClassName('remove-channel-button');
     Array.from(removeChannelButtons).forEach(button => {
         button.addEventListener('click', (e) => {
@@ -182,8 +198,6 @@ async function loadCategoryVideos() {
             }
         });
     });
-    loader.style.display = 'none';
-    await fetchVideoStatus();
 }
 
 async function fetchVideoStatus() {
