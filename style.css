@@ -150,8 +150,10 @@ button:hover {
 }
 
 .video-status-live {
+    margin-left: 5px;
+    font-weight: bold;
     background-color: #ff0000;
-    border-radius: 2px;
+    border-radius: 5px;
     padding: 0 2px 2px 2px;
 }
 
