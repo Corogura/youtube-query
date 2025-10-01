@@ -199,7 +199,7 @@ async function fetchVideoStatus() {
                 statusP.innerHTML = statusP.innerHTML + ` | <span class="video-status">${calculateTimeDifference(item.liveStreamingDetails.scheduledStartTime)}ライブ配信予定</span>`;
                 break;
             case 'live':
-                statusP.innerHTML = statusP.innerHTML + ' | <span class="video-status">ライブ配信中</span>';
+                statusP.innerHTML = statusP.innerHTML + ' | <span class="video-status-live">ライブ配信中</span>';
                 break;
             case 'none':
                 statusP.innerHTML = statusP.innerHTML + ' | <span class="video-status">公開中</span>';

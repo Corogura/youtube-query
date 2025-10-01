@@ -149,6 +149,12 @@ button:hover {
     font-weight: bold;
 }
 
+.video-status-live {
+    background-color: #ff0000;
+    border-radius: 2px;
+    padding: 0 2px 2px 2px;
+}
+
 #loader-section {
     display: flex;
     justify-content: center;
