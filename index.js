@@ -236,7 +236,9 @@ function calculateTimeDifference(futureDate) {
     const now = new Date();
     const future = new Date(futureDate);
     const diffInSeconds = Math.floor((future - now) / 1000);
-    if (diffInSeconds < 60) {
+    if (diffInSeconds <= 0) {
+        return 'まもなく';
+    } else if (diffInSeconds < 60) {
         return `${diffInSeconds} 秒後`;
     } else if (diffInSeconds < 3600) {
         const minutes = Math.floor(diffInSeconds / 60);
