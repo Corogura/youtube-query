@@ -123,6 +123,9 @@ async function fetchChannelId(handle) {
         throw new Error('無効なチャンネルハンドル/IDです。');
     }
     const response = await fetch(url);
+    if (!response.ok) {
+        throw new Error('ネットワークエラーが発生しました。');
+    }
     const data = await response.json();
     if (data.items && data.items.length > 0) {
         return data.items[0].id;
@@ -214,28 +217,35 @@ function addRemoveChannelButtonListeners() {
 async function fetchVideoStatus() {
     const videoDivs = document.getElementsByClassName('video-section');
     const joinedIds = Array.from(videoDivs).map(div => div.getAttribute('videoid')).join(',');
-    const response = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=snippet,liveStreamingDetails&id=${joinedIds}&hl=ja&key=${apiKey}`);
-    const data = await response.json();
-    for (const item of data.items) {
-        const videoId = item.id;
-        const statusP = document.getElementById(`status-${videoId}`);
-        switch (item.snippet.liveBroadcastContent) {
-            case 'upcoming':
-                statusP.innerHTML = statusP.innerHTML + ` | <span class="video-status">${calculateTimeDifference(item.liveStreamingDetails.scheduledStartTime)}ライブ配信予定</span>`;
-                break;
-            case 'live':
-                statusP.innerHTML = statusP.innerHTML + ' | <span class="video-status-live">ライブ配信中</span>';
-                break;
-            case 'none':
-                statusP.innerHTML = statusP.innerHTML + ' | <span class="video-status">公開中</span>';
-                break;
-            default:
-                statusP.innerHTML = statusP.innerHTML + ' | <span class="video-status">不明</span>';
+    try {
+        const response = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=snippet,liveStreamingDetails&id=${joinedIds}&hl=ja&key=${apiKey}`);
+        if (!response.ok) {
+            throw new Error('ネットワークエラーが発生しました。');
         }
-        if (item.snippet.defaultLanguage && item.snippet.defaultLanguage !== 'ja') {
-            const videoTitle = document.querySelector(`div[videoid="${videoId}"] h3`);
-            videoTitle.innerHTML = item.snippet.localized.title;
+        const data = await response.json();
+        for (const item of data.items) {
+            const videoId = item.id;
+            const statusP = document.getElementById(`status-${videoId}`);
+            switch (item.snippet.liveBroadcastContent) {
+                case 'upcoming':
+                    statusP.innerHTML = statusP.innerHTML + ` | <span class="video-status">${calculateTimeDifference(item.liveStreamingDetails.scheduledStartTime)}ライブ配信予定</span>`;
+                    break;
+                case 'live':
+                    statusP.innerHTML = statusP.innerHTML + ' | <span class="video-status-live">ライブ配信中</span>';
+                    break;
+                case 'none':
+                    statusP.innerHTML = statusP.innerHTML + ' | <span class="video-status">公開中</span>';
+                    break;
+                default:
+                    statusP.innerHTML = statusP.innerHTML + ' | <span class="video-status">不明</span>';
+            }
+            if (item.snippet.defaultLanguage && item.snippet.defaultLanguage !== 'ja') {
+                const videoTitle = document.querySelector(`div[videoid="${videoId}"] h3`);
+                videoTitle.innerHTML = item.snippet.localized.title;
+            }
         }
+    } catch (error) {
+        console.error('Error fetching video status:', error);
     }
 }
 
@@ -260,16 +270,24 @@ function calculateTimeDifference(futureDate) {
 }
 
 async function fetchLatestVideo(channelId) {
-    const response = await fetch(`https://www.googleapis.com/youtube/v3/activities?part=snippet,contentDetails&channelId=${channelId}&hl=ja&maxResults=3&order=date&type=video&key=${apiKey}`);
-    const data = await response.json();
-    const items = data.items;
-    for (const item of items) {
-        if (item.snippet.type === 'upload') {
-            item.videoId = item.contentDetails.upload.videoId;
-            return item;
+    try {
+        const response = await fetch(`https://www.googleapis.com/youtube/v3/activities?part=snippet,contentDetails&channelId=${channelId}&hl=ja&maxResults=3&order=date&type=video&key=${apiKey}`);
+        if (!response.ok) {
+            throw new Error('ネットワークエラーが発生しました。');
         }
+        const data = await response.json();
+        const items = data.items;
+        for (const item of items) {
+            if (item.snippet.type === 'upload') {
+                item.videoId = item.contentDetails.upload.videoId;
+                return item;
+            }
+        }
+        return null;
+    } catch (error) {
+        console.error('Error fetching latest video:', error);
+        return null;
     }
-    return null;
 }
 
 async function fetchChannel() {
@@ -277,15 +295,23 @@ async function fetchChannel() {
     const channelCount = savedCategories[currentCategoryIndex].channels.length;
     if (channelCount === 0) return channel;
     const channelsString = savedCategories[currentCategoryIndex].channels.join(',');
-    const response = await fetch(`https://www.googleapis.com/youtube/v3/channels?part=snippet&maxResult=${channelCount}&hl=ja&id=${channelsString}&key=${apiKey}`);
-    const data = await response.json();
-    const twitterRegex = "https?:\/\/twitter\.com\/[^\\s\\n\\\\]+";
-    for (const item of data.items) {
-        channel.set(item.id + '_thumbnail', item.snippet.thumbnails.medium.url);
-        channel.set(item.id + '_title', item.snippet.localized.title);
-        if (item.snippet.localized.description && item.snippet.localized.description.match(twitterRegex)) {
-            channel.set(item.id + '_twitter', item.snippet.localized.description.match(twitterRegex)[0]);
+    try {
+        const response = await fetch(`https://www.googleapis.com/youtube/v3/channels?part=snippet&maxResult=${channelCount}&hl=ja&id=${channelsString}&key=${apiKey}`);
+        if (!response.ok) {
+            throw new Error('ネットワークエラーが発生しました。');
         }
+        const data = await response.json();
+        const twitterRegex = "https?:\/\/twitter\.com\/[^\\s\\n\\\\]+";
+        for (const item of data.items) {
+            channel.set(item.id + '_thumbnail', item.snippet.thumbnails.medium.url);
+            channel.set(item.id + '_title', item.snippet.localized.title);
+            if (item.snippet.localized.description && item.snippet.localized.description.match(twitterRegex)) {
+                channel.set(item.id + '_twitter', item.snippet.localized.description.match(twitterRegex)[0]);
+            }
+        }
+        return channel;
+    } catch (error) {
+        console.error('Error fetching channel data:', error);
+        return channel;
     }
-    return channel;
 }
