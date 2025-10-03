@@ -131,6 +131,14 @@ button:hover {
     vertical-align: middle;
 }
 
+.x-icon {
+    width: 16px;
+    vertical-align: middle;
+    background-color: black;
+    border-radius: 5px;
+    padding: 4px;
+}
+
 .video-section {
     width: 75%;
 }

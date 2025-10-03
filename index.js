@@ -178,6 +178,13 @@ async function loadCategoryVideos() {
                         <p id="status-${video.videoId}">投稿日時: ${new Date(video.snippet.publishedAt).toLocaleString()}</p>
                     </div>
                 `;
+                if (channels.get(video.snippet.channelId + '_twitter')) {
+                    const twitterLink = document.createElement('a');
+                    twitterLink.href = channels.get(video.snippet.channelId + '_twitter');
+                    twitterLink.target = '_blank';
+                    twitterLink.innerHTML = '<img src="x-logo-white.png" alt="X Icon" class="x-icon">';
+                    videoDiv.querySelector('.channel-title').appendChild(twitterLink);
+                }
                 videosListDiv.appendChild(videoDiv);
             });
         }
@@ -272,9 +279,13 @@ async function fetchChannel() {
     const channelsString = savedCategories[currentCategoryIndex].channels.join(',');
     const response = await fetch(`https://www.googleapis.com/youtube/v3/channels?part=snippet&maxResult=${channelCount}&hl=ja&id=${channelsString}&key=${apiKey}`);
     const data = await response.json();
+    const twitterRegex = "https?:\/\/twitter\.com\/[^\\s\\n\\\\]+";
     for (const item of data.items) {
         channel.set(item.id + '_thumbnail', item.snippet.thumbnails.medium.url);
         channel.set(item.id + '_title', item.snippet.localized.title);
+        if (item.snippet.localized.description.match(twitterRegex)) {
+            channel.set(item.id + '_twitter', item.snippet.localized.description.match(twitterRegex)[0]);
+        }
     }
     return channel;
 }
