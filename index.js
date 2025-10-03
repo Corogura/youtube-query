@@ -283,7 +283,7 @@ async function fetchChannel() {
     for (const item of data.items) {
         channel.set(item.id + '_thumbnail', item.snippet.thumbnails.medium.url);
         channel.set(item.id + '_title', item.snippet.localized.title);
-        if (item.snippet.localized.description.match(twitterRegex)) {
+        if (item.snippet.localized.description && item.snippet.localized.description.match(twitterRegex)) {
             channel.set(item.id + '_twitter', item.snippet.localized.description.match(twitterRegex)[0]);
         }
     }
