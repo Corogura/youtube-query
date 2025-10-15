@@ -5,11 +5,15 @@ if (apiKey) {
 }
 
 const savedCategories = JSON.parse(localStorage.getItem("youtube_categories") || "null");
-let currentCategoryIndex = null;
+let currentCategoryIndex = 0;
+const loadedCategories = [];
 if (!savedCategories) {
     localStorage.setItem("youtube_categories", JSON.stringify([{"name": "メイン", "channels": []}]));
 }
 for (const category of savedCategories) {
+    loadedCategories.push({
+        loaded: false
+    });
     const categoryDiv = document.createElement('div');
     categoryDiv.className = 'category-item';
     categoryDiv.id = `category-${category.name}`;
@@ -25,10 +29,14 @@ for (const category of savedCategories) {
                 div.classList.add('category-item');
             }
         });
-        document.getElementById('videos-list').innerHTML = '<div class="loader" style="display:none;"></div>';
-        const loader = document.querySelector('.loader');
-        loader.style.display = 'block';
-        await loadCategoryVideos();
+        if (!loadedCategories[currentCategoryIndex].loaded) {
+            document.getElementById('videos-list').innerHTML = '<div class="loader" style="display:none;"></div>';
+            const loader = document.querySelector('.loader');
+            loader.style.display = 'block';
+            await loadCategoryVideos();
+        } else {
+            document.getElementById('videos-list').innerHTML = loadedCategories[currentCategoryIndex].innerHTML;
+        }
     });
     document.getElementById('channel-categories').appendChild(categoryDiv);
 }
@@ -196,6 +204,8 @@ async function loadCategoryVideos() {
     await fetchVideoStatus();
     addRemoveChannelButtonListeners();
     loader.style.display = 'none';
+    loadedCategories[currentCategoryIndex].innerHTML = videosListDiv.innerHTML;
+    loadedCategories[currentCategoryIndex].loaded = true;
 }
 
 function addRemoveChannelButtonListeners() {
