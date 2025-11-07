@@ -281,16 +281,25 @@ function calculateTimeDifference(futureDate) {
 
 async function fetchLatestVideo(channelId) {
     try {
-        const response = await fetch(`https://www.googleapis.com/youtube/v3/activities?part=snippet,contentDetails&channelId=${channelId}&hl=ja&maxResults=3&order=date&type=video&key=${apiKey}`);
-        if (!response.ok) {
-            throw new Error('ネットワークエラーが発生しました。');
-        }
-        const data = await response.json();
-        const items = data.items;
-        for (const item of items) {
-            if (item.snippet.type === 'upload') {
-                item.videoId = item.contentDetails.upload.videoId;
-                return item;
+        let reqString = `https://www.googleapis.com/youtube/v3/activities?part=snippet,contentDetails&channelId=${channelId}&hl=ja&maxResults=50&order=date&type=video&key=${apiKey}`;
+        while (true) {
+            const response = await fetch(reqString);
+            if (!response.ok) {
+                throw new Error('ネットワークエラーが発生しました。');
+            }
+            const data = await response.json();
+            const items = data.items;
+            for (const item of items) {
+                if (item.snippet.type === 'upload') {
+                    item.videoId = item.contentDetails.upload.videoId;
+                    video = item;
+                    return video;
+                }
+            }
+            if (data.nextPageToken) {
+                reqString = `https://www.googleapis.com/youtube/v3/activities?part=snippet,contentDetails&channelId=${channelId}&hl=ja&maxResults=50&pageToken=${data.nextPageToken}&order=date&type=video&key=${apiKey}`;
+            } else {
+                break;
             }
         }
         return null;
