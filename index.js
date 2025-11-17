@@ -334,3 +334,25 @@ async function fetchChannel() {
         return channel;
     }
 }
+
+// Import and Export Functionality
+
+function downloadTextFile(filename, content) {
+    const blob = new Blob([content], { type: 'text/plain' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(link.href);
+}
+
+const exportButton = document.getElementById('export-button');
+exportButton.addEventListener('click', () => {
+    const d = new Date();
+    const dateStr = d.toLocaleDateString().replaceAll('/', '');
+    const filename = 'youtube-query-' + dateStr + '.txt';
+    const dataStr = localStorage.getItem("youtube_api_key") + "\n" + localStorage.getItem("youtube_categories");
+    downloadTextFile(filename, dataStr);
+});
