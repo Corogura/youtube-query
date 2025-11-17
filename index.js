@@ -353,6 +353,43 @@ exportButton.addEventListener('click', () => {
     const d = new Date();
     const dateStr = d.toLocaleDateString().replaceAll('/', '');
     const filename = 'youtube-query-' + dateStr + '.txt';
-    const dataStr = localStorage.getItem("youtube_api_key") + "\n" + localStorage.getItem("youtube_categories");
+    const dataStr = "[youtube-query]\n" + localStorage.getItem("youtube_api_key") + "\n" + localStorage.getItem("youtube_categories");
     downloadTextFile(filename, dataStr);
+});
+
+const importButton = document.getElementById('import-button');
+const importFileInput = document.getElementById('import-file-input');
+importButton.addEventListener('click', () => {
+    alert('インポートするファイルを選択してください。既存のデータは上書きされます。');
+    importFileInput.click();
+});
+
+importFileInput.addEventListener('change', (event) => {
+    const file = event.target.files[0];
+    if (!file) {
+        alert('ファイルが選択されていません。');
+        return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const content = e.target.result;
+        const lines = content.split('\n');
+        if (lines.length < 3 || lines[0].trim() !== '[youtube-query]') {
+            alert('無効なファイル形式です。');
+            return;
+        }
+        const importedApiKey = lines[1].trim();
+        let importedCategories;
+        try {
+            importedCategories = JSON.parse(lines[2].trim());
+        } catch (error) {
+            alert('カテゴリデータの解析に失敗しました。');
+            return;
+        }
+        localStorage.setItem("youtube_api_key", importedApiKey);
+        localStorage.setItem("youtube_categories", JSON.stringify(importedCategories));
+        alert('データがインポートされました。ページを再読み込みします。');
+        window.location.reload();
+    };
+    reader.readAsText(file);
 });
