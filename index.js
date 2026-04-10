@@ -218,7 +218,8 @@ function addRemoveChannelButtonListeners() {
                 savedCategories[currentCategoryIndex].channels.splice(index, 1);
                 localStorage.setItem("youtube_categories", JSON.stringify(savedCategories));
                 alert('チャンネルが削除されました。');
-                window.location.reload();
+                const videoDiv = button.parentElement.parentElement;
+                videoDiv.remove();
             }
         });
     });
