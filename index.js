@@ -186,8 +186,8 @@ async function loadCategoryVideos() {
         }
         videoDiv.innerHTML = `
             <div class="channel-title-section">
-                <img src="${channels.get(video.snippet.channelId + '_thumbnail') || ''}" alt="Channel Thumbnail" class="channel-thumbnail">
-                <div class="channel-title"><h2>${channels.get(video.snippet.channelId + '_title' || '')}</h2><a href="https://www.youtube.com/channel/${video.snippet.channelId}" target="_blank"><img src="yt_icon_red_digital.png" alt="YouTube Icon" class="youtube-icon"></a></div>
+                <img src="${channels.get(video.snippet.channelId + '_thumbnail') ?? ''}" alt="Channel Thumbnail" class="channel-thumbnail">
+                <div class="channel-title"><h2>${channels.get(video.snippet.channelId + '_title') ?? ''}</h2><a href="https://www.youtube.com/channel/${video.snippet.channelId}" target="_blank"><img src="yt_icon_red_digital.png" alt="YouTube Icon" class="youtube-icon"></a></div>
                 <button class="remove-channel-button" data-channel-id="${video.snippet.channelId}">チャンネル削除</button>
             </div>
             <div class="video-section" videoid="${video.videoId}">
