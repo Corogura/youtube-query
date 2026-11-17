@@ -146,7 +146,9 @@ async function loadCategoryVideos() {
     const loader = document.querySelector('.loader');
     loader.style.display = 'block';
 
-    if (savedCategories[currentCategoryIndex].channels.length === 0) {
+    const channelIds = savedCategories[currentCategoryIndex].channels;
+
+    if (channelIds.length === 0) {
         document.getElementById('videos-list').innerHTML = '<p>チャンネルが追加されていません。上のフォームからチャンネルを追加してください。</p>';
         loader.style.display = 'none';
         return;
@@ -155,51 +157,54 @@ async function loadCategoryVideos() {
     const videosListDiv = document.getElementById('videos-list');
     videosListDiv.innerHTML = '';
     videosListDiv.appendChild(loader);
-    const channels = await fetchChannel();
-    const videos = [];
 
-    for (const channelId of savedCategories[currentCategoryIndex].channels) {
-        const latestVideo = await fetchLatestVideo(channelId);
-        if (latestVideo) {
-            videos.push(latestVideo);
-            videos.sort((a, b) => new Date(b.snippet.publishedAt) - new Date(a.snippet.publishedAt));
+    const [channels, videoResults] = await Promise.all([
+        fetchChannel(),
+        Promise.allSettled(channelIds.map(id => fetchLatestVideo(id)))
+    ]);
 
-            Array.from(videosListDiv.children).forEach(child => {
-                if (!child.classList.contains('loader')) {
-                    child.remove();
-                }
-            });
+    const videos = videoResults
+    .filter(r => r.status === 'fulfilled' && r.value)
+    .map(r => r.value);
 
-            videos.forEach((video, index) => {
-                const videoDiv = document.createElement('div');
-                if (index === videos.length - 1) {
-                    videoDiv.className = 'video-item-last';
-                } else {
-                    videoDiv.className = 'video-item';
-                }
-                videoDiv.innerHTML = `
-                    <div class="channel-title-section">
-                        <img src="${channels.get(video.snippet.channelId + '_thumbnail') || ''}" alt="Channel Thumbnail" class="channel-thumbnail">
-                        <div class="channel-title"><h2>${channels.get(video.snippet.channelId + '_title' || '')}</h2><a href="https://www.youtube.com/channel/${video.snippet.channelId}" target="_blank"><img src="yt_icon_red_digital.png" alt="YouTube Icon" class="youtube-icon"></a></div>
-                        <button class="remove-channel-button" data-channel-id="${video.snippet.channelId}">チャンネル削除</button>
-                    </div>
-                    <div class="video-section" videoid="${video.videoId}">
-                        <h3>${video.snippet.title}</h3>
-                        <a href="https://www.youtube.com/watch?v=${video.videoId}" target="_blank"><img src="${video.snippet.thumbnails.high.url}" alt="Video Thumbnail" class="video-thumbnail"></a>
-                        <p id="status-${video.videoId}">投稿日時: ${new Date(video.snippet.publishedAt).toLocaleString()}</p>
-                    </div>
-                `;
-                if (channels.get(video.snippet.channelId + '_twitter')) {
-                    const twitterLink = document.createElement('a');
-                    twitterLink.href = channels.get(video.snippet.channelId + '_twitter');
-                    twitterLink.target = '_blank';
-                    twitterLink.innerHTML = '<img src="x-logo-white.png" alt="X Icon" class="x-icon">';
-                    videoDiv.querySelector('.channel-title').appendChild(twitterLink);
-                }
-                videosListDiv.appendChild(videoDiv);
-            });
-        }
+    if (videos.length === 0) {
+        videosListDiv.innerHTML = '<p>動画を取得できませんでした。</p>';
+        loader.style.display = 'none';
+        return;
     }
+
+    videos.sort((a, b) =>
+        new Date(b.snippet.publishedAt) - new Date(a.snippet.publishedAt)
+    );
+
+    videos.forEach((video, index) => {
+        const videoDiv = document.createElement('div');
+        if (index === videos.length - 1) {
+            videoDiv.className = 'video-item-last';
+        } else {
+            videoDiv.className = 'video-item';
+        }
+        videoDiv.innerHTML = `
+            <div class="channel-title-section">
+                <img src="${channels.get(video.snippet.channelId + '_thumbnail') || ''}" alt="Channel Thumbnail" class="channel-thumbnail">
+                <div class="channel-title"><h2>${channels.get(video.snippet.channelId + '_title' || '')}</h2><a href="https://www.youtube.com/channel/${video.snippet.channelId}" target="_blank"><img src="yt_icon_red_digital.png" alt="YouTube Icon" class="youtube-icon"></a></div>
+                <button class="remove-channel-button" data-channel-id="${video.snippet.channelId}">チャンネル削除</button>
+            </div>
+            <div class="video-section" videoid="${video.videoId}">
+                <h3>${video.snippet.title}</h3>
+                <a href="https://www.youtube.com/watch?v=${video.videoId}" target="_blank"><img src="${video.snippet.thumbnails.high.url}" alt="Video Thumbnail" class="video-thumbnail"></a>
+                <p id="status-${video.videoId}">投稿日時: ${new Date(video.snippet.publishedAt).toLocaleString()}</p>
+            </div>
+        `;
+        if (channels.get(video.snippet.channelId + '_twitter')) {
+            const twitterLink = document.createElement('a');
+            twitterLink.href = channels.get(video.snippet.channelId + '_twitter');
+            twitterLink.target = '_blank';
+            twitterLink.innerHTML = '<img src="x-logo-white.png" alt="X Icon" class="x-icon">';
+            videoDiv.querySelector('.channel-title').appendChild(twitterLink);
+        }
+        videosListDiv.appendChild(videoDiv);
+    });
 
     await fetchVideoStatus();
     addRemoveChannelButtonListeners();
