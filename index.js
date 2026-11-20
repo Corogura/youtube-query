@@ -317,28 +317,41 @@ async function fetchLatestVideo(channelId) {
 
 async function fetchChannel() {
     const channel = new Map();
-    const channelCount = savedCategories[currentCategoryIndex].channels.length;
-    if (channelCount === 0) return channel;
-    const channelsString = savedCategories[currentCategoryIndex].channels.join(',');
-    try {
-        const response = await fetch(`https://www.googleapis.com/youtube/v3/channels?part=snippet&maxResult=${channelCount}&hl=ja&id=${channelsString}&key=${apiKey}`);
-        if (!response.ok) {
-            throw new Error('ネットワークエラーが発生しました。');
+    const ids = savedCategories[currentCategoryIndex].channels;
+    if (ids.length === 0) return channel;
+
+    const twitterRegex = "https?:\/\/twitter\.com\/[^\\s\\n\\\\]+";
+
+    const chunks = [];
+    for (let i = 0; i < ids.length; i += 50) {
+        chunks.push(ids.slice(i, i + 50));
+    }
+
+    const responses = await Promise.all(chunks.map(async (batch) => {
+        try {
+            const response = await fetch(
+                `https://www.googleapis.com/youtube/v3/channels?part=snippet&hl=ja&id=${batch.join(',')}&key=${apiKey}`
+            );
+            if (!response.ok) {
+                throw new Error('ネットワークエラーが発生しました。');
+            }
+            return await response.json();
+        } catch (error) {
+            console.error('Error fetching channel data:', error);
+            return null;
         }
-        const data = await response.json();
-        const twitterRegex = "https?:\/\/twitter\.com\/[^\\s\\n\\\\]+";
+    }));
+
+    for (const data of responses) {
+        if (!data) continue;
         for (const item of data.items) {
             channel.set(item.id + '_thumbnail', item.snippet.thumbnails.medium.url);
             channel.set(item.id + '_title', item.snippet.localized.title);
-            if (item.snippet.localized.description && item.snippet.localized.description.match(twitterRegex)) {
-                channel.set(item.id + '_twitter', item.snippet.localized.description.match(twitterRegex)[0]);
-            }
+            const match = item.snippet.localized.description?.match(twitterRegex);
+            if (match) channel.set(item.id + '_twitter', match[0]);
         }
-        return channel;
-    } catch (error) {
-        console.error('Error fetching channel data:', error);
-        return channel;
     }
+    return channel;
 }
 
 // Import and Export Functionality
