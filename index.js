@@ -211,6 +211,25 @@ async function loadCategoryVideos() {
     loader.style.display = 'none';
     loadedCategories[currentCategoryIndex].innerHTML = videosListDiv.innerHTML;
     loadedCategories[currentCategoryIndex].loaded = true;
+
+    const deletedChannels = channels.get('deletedChannels');
+    if (deletedChannels) {
+        const deletedChannelsDiv = document.getElementById('deleted-channels-section');
+        deletedChannelsDiv.style.display = 'block';
+        for (const deletedChannel of deletedChannels) {
+            const p = document.createElement('p');
+            p.textContent = deletedChannel;
+            deletedChannelsDiv.prepend(p);
+        }
+        const cleanButton = document.getElementById('clean-button');
+        cleanButton.addEventListener('click', () => {
+            const newChannelArray = channelIds.filter(s => !deletedChannels.has(s));
+            savedCategories[currentCategoryIndex].channels = newChannelArray;
+            localStorage.setItem("youtube_categories", JSON.stringify(savedCategories));
+            alert('クリーンアップしました');
+            window.location.reload();
+        })
+    }
 }
 
 function addRemoveChannelButtonListeners() {
@@ -316,9 +335,10 @@ async function fetchLatestVideo(channelId) {
 }
 
 async function fetchChannel() {
-    const channel = new Map();
+    const channelData = new Map();
+    const returnedChannels = new Array();
     const ids = savedCategories[currentCategoryIndex].channels;
-    if (ids.length === 0) return channel;
+    if (ids.length === 0) return channelData;
 
     const twitterRegex = "https?:\/\/twitter\.com\/[^\\s\\n\\\\]+";
 
@@ -345,13 +365,23 @@ async function fetchChannel() {
     for (const data of responses) {
         if (!data) continue;
         for (const item of data.items) {
-            channel.set(item.id + '_thumbnail', item.snippet.thumbnails.medium.url);
-            channel.set(item.id + '_title', item.snippet.localized.title);
+            returnedChannels.push(item.id);
+            channelData.set(item.id + '_thumbnail', item.snippet.thumbnails.medium.url);
+            channelData.set(item.id + '_title', item.snippet.localized.title);
             const match = item.snippet.localized.description?.match(twitterRegex);
-            if (match) channel.set(item.id + '_twitter', match[0]);
+            if (match) channelData.set(item.id + '_twitter', match[0]);
         }
     }
-    return channel;
+    if (returnedChannels.length !== ids.length) {
+        const deletedChannels = new Set();
+        for (const id of ids) {
+            if (!returnedChannels.includes(id)) {
+                deletedChannels.add(id);
+            }
+        }
+        channelData.set('deletedChannels', deletedChannels);
+    }
+    return channelData;
 }
 
 // Import and Export Functionality

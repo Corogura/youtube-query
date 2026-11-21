@@ -67,6 +67,15 @@ button:hover {
     background-color: #3c485a;
 }
 
+#deleted-channels-section {
+    width: fit-content;
+    border-style: solid;
+    border-width: 1px;
+    border-color: white;
+    border-radius: 10px;
+    padding: 20px;
+}
+
 #videos-list {
     display: flex;
     flex-direction: column;
